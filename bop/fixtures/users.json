@@ -1,0 +1,74 @@
+[
+  {
+    "pk": 1, 
+    "model": "auth.group", 
+    "fields": {
+      "name": "anons", 
+      "permissions": []
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "auth.group", 
+    "fields": {
+      "name": "someperms", 
+      "permissions": []
+    }
+  }, 
+  {
+    "pk": 1, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "pterk", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": true, 
+      "is_superuser": true, 
+      "is_staff": true, 
+      "last_login": "2010-10-19 09:12:16", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$52ce1$e1b4d915f023ec50a57bac39adfe133a786d0a11", 
+      "email": "pterk@datatailors.com", 
+      "date_joined": "2010-10-19 09:03:19"
+    }
+  }, 
+  {
+    "pk": 2, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "anon", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": true, 
+      "is_superuser": false, 
+      "is_staff": false, 
+      "last_login": "2010-10-19 17:40:18", 
+      "groups": [], 
+      "user_permissions": [], 
+      "password": "sha1$9f76b$2fefee245d2e1ab7c13c0ca37455666cff59279f", 
+      "email": "", 
+      "date_joined": "2010-10-19 17:40:18"
+    }
+  }, 
+  {
+    "pk": 3, 
+    "model": "auth.user", 
+    "fields": {
+      "username": "test", 
+      "first_name": "", 
+      "last_name": "", 
+      "is_active": true, 
+      "is_superuser": false, 
+      "is_staff": false, 
+      "last_login": "2010-10-19 17:41:13", 
+      "groups": [
+        2
+      ], 
+      "user_permissions": [], 
+      "password": "sha1$e9c7c$530704555a62773e89ffc27f4aa8b14fb9b1219d", 
+      "email": "", 
+      "date_joined": "2010-10-19 17:41:13"
+    }
+  }
+]
