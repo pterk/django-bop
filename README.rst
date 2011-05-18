@@ -6,7 +6,8 @@ later. It is mostly based on the django-advent article_ 'Object
 Permissions' by Florian Apolloner.
 
 Although there are a few other_ permission backends I wanted a
-simple(r) backend that plays nive with a 'vanilla' django install.
+simple(r) backend that closely matches the existing django
+functionality.
 
 Installation
 ------------
