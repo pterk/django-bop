@@ -22,14 +22,20 @@ class TableManager(object):
 
     def __init__(self):
         self.cursor = connection.cursor()
+        self.table_names = connection.introspection.get_table_list(self.cursor)
 
     def execute(self, statements):
         for statement in statements:
             self.cursor.execute(statement)
 
+    def model_exists(self, model):
+        return connection.introspection.table_name_converter(model._meta.db_table) in self.table_names
+
     def create_table(self, *models):
         """ Create all tables for the given models """
         for model in models:
+            if self.model_exists(model):
+                continue
             self.execute(connection.creation.sql_create_model(model, STYLE)[0])
             self.execute(connection.creation.sql_indexes_for_model(model, STYLE))
             self.execute(sql.custom_sql_for_model(model, STYLE, connection))
@@ -39,12 +45,11 @@ class TableManager(object):
 
         See django.core.management.sql 
         """
-        table_names = connection.introspection.get_table_list(self.cursor)
         output = []
         to_delete = set()
         references_to_delete = {}
         for model in models:
-            if self.cursor and connection.introspection.table_name_converter(model._meta.db_table) in table_names:
+            if self.cursor and self.model_exists(model):
                 # The table exists, so it needs to be dropped
                 opts = model._meta
                 for f in opts.local_fields:
@@ -54,7 +59,7 @@ class TableManager(object):
                 to_delete.add(model)
 
         for model in models:
-            if connection.introspection.table_name_converter(model._meta.db_table) in table_names:
+            if self.model_exists(model):
                 output.extend(connection.creation.sql_destroy_model(model, references_to_delete, STYLE))
 
         self.execute(output[::-1])
