@@ -1,5 +1,7 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
@@ -13,29 +15,41 @@ class ObjectPermissionManager(models.Manager):
 
     def get_for_user(self, user):
         if user.is_anonymous():
-            user=User.objects.get(id=settings.ANONYMOUS_USER_ID)
-        return self.filter(group__in=user.groups.all())
+            return self.none()
+        return self.filter(Q(group__in=user.groups.all()) |
+                           Q(user=user))
 
     def get_for_model_and_user(self, model, user):
-        ct = ContentType.objects.get_for_model(model)
         if user.is_anonymous():
-            user=User.objects.get(id=settings.ANONYMOUS_USER_ID)
-        return self.filter(group__in=user.groups.all(),
+            return self.none()
+        ct = ContentType.objects.get_for_model(model)
+        return self.filter((Q(group__in=user.groups.all()) |
+                            Q(user=user)),
                            content_type=ct)
         
 
 class ObjectPermission(models.Model):
-    group = models.ForeignKey(Group)
-    permission   = models.ForeignKey(Permission)
+    user = models.ForeignKey(User, null=True, blank=True)
+    group = models.ForeignKey(Group, null=True, blank=True)
+    permission = models.ForeignKey(Permission)
     content_type = models.ForeignKey(ContentType)
-    object_id    = models.PositiveIntegerField()
-    object       = generic.GenericForeignKey('content_type', 'object_id')
+    object_id = models.PositiveIntegerField()
+    object = generic.GenericForeignKey('content_type', 'object_id')
 
     objects      = ObjectPermissionManager()
 
     class Meta:
-        unique_together = ('content_type', 'object_id', 'permission', 'group')
+        unique_together = ('content_type', 'object_id', 'permission', 'group', 'user')
+
+    def clean(self):
+        if (self.user is None and self.group is None) or \
+                (self.user and self.group):
+            raise ValidationError('You *must* provide EITHER a user OR a group. (Not neither nor both.)')
 
     def __unicode__(self):
-        return "Group '%s' has '%s' permission on %s" % \
-            (self.group, self.permission.codename, repr(self.object))
+        if self.user:
+            return "User '%s' has '%s' permission on %s" % \
+                (self.user, self.permission.codename, repr(self.object))
+        else:
+            return "Group '%s' has '%s' permission on %s" % \
+                (self.group, self.permission.codename, repr(self.object))
