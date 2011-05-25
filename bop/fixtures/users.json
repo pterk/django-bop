@@ -3,7 +3,7 @@
     "pk": 1, 
     "model": "auth.group", 
     "fields": {
-      "name": "anons", 
+      "name": "bob_anons", 
       "permissions": []
     }
   }, 
@@ -11,7 +11,7 @@
     "pk": 2, 
     "model": "auth.group", 
     "fields": {
-      "name": "someperms", 
+      "name": "bob_someperms", 
       "permissions": []
     }
   }, 
@@ -37,14 +37,14 @@
     "pk": 2, 
     "model": "auth.user", 
     "fields": {
-      "username": "anon", 
+      "username": "bob_anon", 
       "first_name": "", 
       "last_name": "", 
       "is_active": true, 
       "is_superuser": false, 
       "is_staff": false, 
       "last_login": "2010-10-19 17:40:18", 
-      "groups": [], 
+      "groups": [1], 
       "user_permissions": [], 
       "password": "sha1$9f76b$2fefee245d2e1ab7c13c0ca37455666cff59279f", 
       "email": "", 
@@ -55,7 +55,7 @@
     "pk": 3, 
     "model": "auth.user", 
     "fields": {
-      "username": "test", 
+      "username": "bob_test", 
       "first_name": "", 
       "last_name": "", 
       "is_active": true, 

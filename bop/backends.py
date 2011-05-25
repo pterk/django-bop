@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import get_backends
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User, Group, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
@@ -13,66 +14,77 @@ class AnonymousModelBackend(object):
 
     Requires a ANONYMOUS_USER_ID set in settings.py (and created in
     the database).
-
     """
     supports_object_permissions = True
     supports_anonymous_user = True
+    supports_inactive_user = True
 
     def __init__(self, *args, **kwargs):
         self.modelbackend  = ModelBackend(*args, **kwargs)
-        # TODO? Refactor so this is optional (and AnonymousBackend can
-        # be used without object level permissions)
-        self.objectbackend = ObjectBackend(*args, **kwargs)
+        self.user_obj = None
         try:
             self.user_obj = User.objects.get(pk=settings.ANONYMOUS_USER_ID)
         except (AttributeError, User.DoesNotExist):
-            #from django.core.exceptions import ImproperlyConfigured
-            #raise ImproperlyConfigured('AnonymousBackend requires an ANONYMOUS_USER_ID in settings.py')
-            self.user_obj = None
+            pass
+            # Commented out because of ugly warnings in django's tests 
+            #
+            # import warnings
+            # warnings.warn(
+            #     "bop.backends.AnonymousModelBackend is enabled in "
+            #     "settings.AUTHENTICATION_BACKENDS. This requires "
+            #     "settings.ANONYMOUS_USER_ID to be set and a user with "
+            #     "that id to be created in the database.")
 
     def authenticate(self, username, password):
         return None
 
     def get_all_permissions(self, user_obj, obj=None):
-        if not self.user_obj:
-            return set()
         if user_obj.is_anonymous():
             user_obj = self.user_obj
-        if obj:
-            return self.objectbackend.get_all_permissions(self.user_obj, obj)
-        else:
-            return self.modelbackend.get_all_permissions(self.user_obj)
-        
+        if user_obj and user_obj.is_active:
+            return self.modelbackend.get_all_permissions(user_obj)
+        return set()
+
     def get_group_permissions(self, user_obj, obj=None):
-        if not self.user_obj:
-            return set()
         if user_obj.is_anonymous():
             user_obj = self.user_obj
-        if obj:
-            return self.objectbackend.get_group_permissions(self.user_obj, obj)
-        else:
-            return self.modelbackend.get_group_permissions(self.user_obj)
+        if user_obj and user_obj.is_active:
+            return self.modelbackend.get_group_permissions(user_obj)
+        return set()
 
     def has_module_perms(self, user_obj, app_label):
-        if not self.user_obj:
-            return False
         if user_obj.is_anonymous():
             user_obj = self.user_obj
-        return (self.modelbackend.has_module_perms(self.user_obj, app_label) \
-                    or self.objectbackend.has_module_perms(self.user_obj, app_label))
+        if user_obj and user_obj.is_active:
+            return self.modelbackend.has_module_perms(user_obj, app_label)
+        return False
 
     def has_perm(self, user_obj, perm, obj=None):
-        return perm in self.get_all_permissions(user_obj, obj)
+        return perm in self.get_all_permissions(user_obj)
 
     
 class ObjectBackend(object):
-    """ Object level permissions 
+    """ Object level perms (for models known in contrib.contenttypes!)
 
-    Falls back on ModelBackend when no obj is passed
+    With (optional) support for anonymous users. 
 
+    Inactive users are supported to the extend that their
+    permission-set is always empty.
+
+    CAVEAT: This only works with objects from models that are known in
+    django.contrib.contenttypes.models.ContentType. For other types of
+    objects this backend will return an empty set.
     """
     supports_object_permissions = True
-    supports_anonymous_user = False
+    supports_anonymous_user = True
+    supports_inactive_user = True
+
+    def __init__(self, *args, **kwargs):
+        self.user_obj = None
+        try:
+            self.user_obj = User.objects.get(pk=settings.ANONYMOUS_USER_ID)
+        except (AttributeError, User.DoesNotExist):
+            pass
 
     def authenticate(self, username, password):
         return None
@@ -80,8 +92,6 @@ class ObjectBackend(object):
     def _get_obj_perms(self, user_obj, obj):
         # Not supported...
         if not isinstance(obj, models.Model):
-            return ObjectPermission.objects.none()
-        if user_obj.is_anonymous():
             return ObjectPermission.objects.none()
         ct = ContentType.objects.get_for_model(obj)
         return ObjectPermission.objects.filter(
@@ -96,15 +106,23 @@ class ObjectBackend(object):
     def get_all_permissions(self, user_obj, obj=None):
         if obj is None:
             return set()
-        return self._listify(self._get_obj_perms(user_obj, obj).filter(
-                Q(group__in=user_obj.groups.all())|
-                Q(user=user_obj)))
+        if user_obj.is_anonymous():
+            user_obj = self.user_obj
+        if user_obj and user_obj.is_active:
+            return self._listify(self._get_obj_perms(user_obj, obj).filter(
+                    Q(group__in=user_obj.groups.all())|
+                    Q(user=user_obj)))
+        return set()
 
     def get_group_permissions(self, user_obj, obj=None):
         if obj is None:
             return set()
-        return self._listify(self._get_obj_perms(user_obj, obj).filter(
-                group__in=user_obj.groups.all()))
+        if user_obj.is_anonymous():
+            user_obj = self.user_obj
+        if user_obj and user_obj.is_active:
+            return self._listify(self._get_obj_perms(user_obj, obj).filter(
+                    group__in=user_obj.groups.all()))
+        return set()
 
     def has_perm(self, user_obj, perm, obj=None):
         return perm in self.get_all_permissions(user_obj, obj)
@@ -112,6 +130,9 @@ class ObjectBackend(object):
     def has_module_perms(self, user_obj, app_label):
         """
         Returns True if user_obj has any permissions in the given app_label.
+
+        Note: If this backend is used, as recommended, in conjunction
+        with ModelBackend then this method wil never be called.
         """
         for perm in self.get_all_permissions(user_obj):
             if perm[:perm.index('.')] == app_label:
