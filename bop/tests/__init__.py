@@ -101,10 +101,23 @@ class TestAnonymousModelBackendNoAnon(BOPTestCase):
         self.assertTrue(self.superuser.has_module_perms('bop'))
 
 
+class TestAnonymousModelBackendNoAnonPlus(TestAnonymousModelBackendNoAnon):
+    def setUp(self):
+        super(TestAnonymousModelBackendNoAnonPlus, self).setUp()
+        settings.AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', 'bop.backends.AnonymousModelBackend']
+
+
 class TestAnonymousModelBackendWithAnon(TestAnonymousModelBackendNoAnon):
     def setUp(self):
         super(TestAnonymousModelBackendWithAnon, self).setUp()
         settings.AUTHENTICATION_BACKENDS = ['bop.backends.AnonymousModelBackend']
+        settings.ANONYMOUS_USER_ID = 2
+
+
+class TestAnonymousModelBackendWithAnonPlus(TestAnonymousModelBackendNoAnon):
+    def setUp(self):
+        super(TestAnonymousModelBackendWithAnonPlus, self).setUp()
+        settings.AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', 'bop.backends.AnonymousModelBackend']
         settings.ANONYMOUS_USER_ID = 2
 
 
@@ -145,20 +158,22 @@ class TestObjectBackendNoAnonymous(BOPTestCase):
                                         object_id=t.id,
                                         permission=perma)
 
-        
         self.assertFalse(self.testuser.has_perm('bop.change_thing', t))
+        self.assertFalse(self.testuser.has_perm('bop.delete_thing'))
         self.assertTrue(self.testuser.has_perm('bop.delete_thing', t))
+        self.assertFalse(self.testuser.has_perm('bop.add_thing'))
         self.assertTrue(self.testuser.has_perm('bop.add_thing', t))
         self.assertTrue(self.superuser.has_perm('bop.add_thing', t))
         self.assertTrue(self.superuser.has_perm('bop.change_thing', t))
         self.assertTrue(self.superuser.has_perm('bop.delete_thing', t))
         self.assertFalse(self.anonuser.has_perm('bop.add_thing', t))
         self.assertFalse(self.anonuser.has_perm('bop.change_thing', t))
+        self.assertFalse(self.anonuser.has_perm('bop.delete_thing'))
         self.assertTrue(self.anonuser.has_perm('bop.delete_thing', t))
         self.assertFalse(self.anonymous.has_perm('bop.add_thing', t))
         self.assertFalse(self.anonymous.has_perm('bop.change_thing', t))
         if hasattr(settings, 'ANONYMOUS_USER_ID'):
-            self.assertTrue(self.anonymous.has_perm('bop.delete_thing'))
+            self.assertFalse(self.anonymous.has_perm('bop.delete_thing'))
             self.assertTrue(self.anonymous.has_perm('bop.delete_thing', t))
         else:
             self.assertFalse(self.anonymous.has_perm('bop.delete_thing'))
@@ -172,6 +187,7 @@ class TestObjectBackendNoAnonymous(BOPTestCase):
         # The takeaway is: A user can have ObjectLevelPermissions for
         # a certain object but still have has_module_perms return
         # False... Such a thing should preferably be avoided...
+        self.assertFalse(self.anonuser.has_module_perms('bop'))
         self.assertFalse(self.anonymous.has_module_perms('bop'))
         self.assertFalse(self.testuser.has_module_perms('bop'))
         self.assertTrue(self.superuser.has_module_perms('bop'))
@@ -219,10 +235,23 @@ class TestObjectBackendNoAnonymous(BOPTestCase):
                 t, self.testuser).count(), 2)
 
 
-class TestObjectBackendWithAnonymous(BOPTestCase):
+class TestObjectBackendNoAnonymousPlus(TestObjectBackendNoAnonymous):
+    def setUp(self):
+        super(TestObjectBackendNoAnonymous, self).setUp()
+        settings.AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', 'bop.backends.ObjectBackend']
+
+
+class TestObjectBackendWithAnonymous(TestObjectBackendNoAnonymous):
     def setUp(self):
         super(TestObjectBackendWithAnonymous, self).setUp()
         settings.AUTHENTICATION_BACKENDS = ['bop.backends.ObjectBackend']
+        settings.ANONYMOUS_USER_ID = 2
+
+
+class TestObjectBackendWithAnonymousPlus(TestObjectBackendNoAnonymous):
+    def setUp(self):
+        super(TestObjectBackendWithAnonymousPlus, self).setUp()
+        settings.AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend', 'bop.backends.ObjectBackend']
         settings.ANONYMOUS_USER_ID = 2
 
 
