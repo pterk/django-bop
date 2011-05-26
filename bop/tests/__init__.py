@@ -16,10 +16,10 @@ class BOPTestCase(TestCase):
     fixtures = ['users.json', ]
 
     def get_users_and_groups(self):
-        self.anonuser  = User.objects.get(username='bob_anon')
-        self.testuser  = User.objects.get(username='bob_test')
-        self.anons     = Group.objects.get(name='bob_anons')
-        self.someperms = Group.objects.get(name='bob_someperms')
+        self.anonuser  = User.objects.get(username='bop_anon')
+        self.testuser  = User.objects.get(username='bop_test')
+        self.anons     = Group.objects.get(name='bop_anons')
+        self.someperms = Group.objects.get(name='bop_someperms')
         self.superuser = User.objects.filter(is_superuser=True)[0]
         self.anonymous = AnonymousUser()
 
@@ -263,6 +263,7 @@ class TestAPI(TestCase):
         self.tablemanager.create_table(Thing)
         self.thing = Thing(label='a thing')
         self.thing.save()
+        self.content_type = ContentType.objects.get_for_model(Thing)
         if self._anonymous_user_id:
             delattr(settings, 'ANONYMOUS_USER_ID')
 
@@ -274,13 +275,98 @@ class TestAPI(TestCase):
             content_type=ContentType.objects.get_for_model(Thing)).delete()
         self.tablemanager.drop_table(Thing)
 
-    def testGrant(self):
+    def testHasModelPerms(self):
+        from bop.api import has_model_perms, get_model_perms
+        self.assertEqual(get_model_perms(Thing) ,get_model_perms(self.thing))
+        testa = User.objects.create_user('test-a', 'test@example.com.invalid', 'test-a')
+        self.assertFalse(has_model_perms(testa, Thing))
+        ct = ContentType.objects.get_for_model(Thing)
+        permd = Permission.objects.get(codename='delete_thing', content_type=ct)
+        testa.user_permissions.add(permd)
+        # re-get the user to clear/re-fill the perms-cache
+        testa = User.objects.get(username='test-a')
+        self.assertTrue(has_model_perms(testa, Thing))
+        testa.delete()
+        
+
+    def testGrantRevoke(self):
         testa = User.objects.create_user('test-a', 'test@example.com.invalid', 'test-a')
         testb = User.objects.create_user('test-b', 'test@example.com.invalid', 'test-b')
         testga, _ = Group.objects.get_or_create(name='test-ga')
         testgb, _ = Group.objects.get_or_create(name='test-gb')
         testa.groups.add(testga)
         testb.groups.add(testgb)
-        perms = Permission.objects.all()
+        perms = Permission.objects.filter(content_type=self.content_type)
         objects = self.thing
+        self.assertEqual(ObjectPermission.objects.count(), 0)
         grant([testa], [testga, testgb], perms, objects)
+        self.assertEqual(ObjectPermission.objects.count(), 15)
+        revoke(None, [testga, testgb], perms, objects)
+        revoke(None, [testga, testgb], perms, objects)
+        self.assertEqual(ObjectPermission.objects.count(), 5)
+        # Try again (should have no consequences)
+        revoke(None, [testga, testgb], perms, objects)
+        self.assertEqual(ObjectPermission.objects.count(), 5)
+        # arbitrary object
+        grant([testa], [testga, testgb], perms, object())
+        self.assertEqual(ObjectPermission.objects.count(), 5)
+        # Just pass names (except for  the objects)
+        grant(None, testga.name, 'bop.delete_thing', self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 6)
+        # non-existing permisions
+        grant(None, testga.name, 'bop.wrong_thing', self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 6)
+        revoke(None, testga.name, 'bop.wrong_thing', self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 6)
+        # non-existing group
+        grant(None, 'InternationalOrganisationOfAnarchists', 'bop.change_thing', self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 6)
+        revoke(None, 'InternationalOrganisationOfAnarchists', 'bop.change_thing', self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 6)
+        # non-existing user
+        grant(AnonymousUser(), None, 'bop.change_thing', self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 6)
+        revoke(AnonymousUser(), None, 'bop.change_thing', self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 6)
+        revoke(None, testga.name, 'bop.delete_thing', self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 5)
+        # use a queryset: revoke thing-perms (see above) for all users
+        revoke(User.objects.all(), None, perms, self.thing)
+        self.assertEqual(ObjectPermission.objects.count(), 0)
+        testa.delete()
+        testb.delete()
+        testga.delete()
+        testgb.delete()
+
+
+class TestUserObjectManager(BOPTestCase):
+
+    def test(self):
+        from bop.managers import UserObjectManager
+        UserObjectManager().contribute_to_class(Thing, 'objects')
+        self.assertEqual(Thing.objects.count(), 1)
+        self.assertEqual(ObjectPermission.objects.get_for_model(Thing).count(), 0)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser).count(), 0)
+        thinga = Thing(label='thinga')
+        thinga.save()
+        thingb = Thing(label='thingb')
+        thingb.save()
+        grant(self.testuser, None, 'bop.change_thing', thinga)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser).count(), 1)
+        grant(self.testuser, None, 'bop.do_thing', thinga)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser).count(), 1)
+        grant(self.testuser, None, 'bop.do_thing', thingb)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser).count(), 2)
+        # Now check for a specific perm
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser, 'bop.do_thing').count(), 2)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser, permissions='bop.change_thing').count(), 1)
+        # And now for something completely different
+        ct = ContentType.objects.get_for_model(Thing)
+        permd = Permission.objects.get(codename='delete_thing', content_type=ct)
+        self.testuser.user_permissions.add(permd)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser, 'bop.change_thing').count(), 1)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser, permissions='bop.change_thing').count(), 1)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser, 'bop.delete_thing', True).count(), 3)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser, check_model_perms=True).count(), 3)
+        self.assertEqual(Thing.objects.get_user_objects(self.testuser, None, True).count(), 3)
+

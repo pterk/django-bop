@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
 
+from bop.api import get_model_perms
 from bop.models import ObjectPermission
 
 
@@ -126,6 +127,17 @@ class ObjectBackend(object):
 
     def has_perm(self, user_obj, perm, obj=None):
         return perm in self.get_all_permissions(user_obj, obj)
+
+    def has_model_perms(self, user_obj, model):
+        """
+        Returns True if user_obj has any permissions in the given model
+        """
+        for perm in self.get_all_permissions(user_obj):
+            app_label, codename = perm.split('.')
+            if model._meta.app_label == app_label and \
+                    codename in get_model_perms(model):
+                return True
+        return False
 
     def has_module_perms(self, user_obj, app_label):
         """

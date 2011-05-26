@@ -3,7 +3,7 @@
     "pk": 1, 
     "model": "auth.group", 
     "fields": {
-      "name": "bob_anons", 
+      "name": "bop_anons", 
       "permissions": []
     }
   }, 
@@ -11,7 +11,7 @@
     "pk": 2, 
     "model": "auth.group", 
     "fields": {
-      "name": "bob_someperms", 
+      "name": "bop_someperms", 
       "permissions": []
     }
   }, 
@@ -19,7 +19,7 @@
     "pk": 1, 
     "model": "auth.user", 
     "fields": {
-      "username": "pterk", 
+      "username": "super", 
       "first_name": "", 
       "last_name": "", 
       "is_active": true, 
@@ -29,7 +29,7 @@
       "groups": [], 
       "user_permissions": [], 
       "password": "sha1$52ce1$e1b4d915f023ec50a57bac39adfe133a786d0a11", 
-      "email": "pterk@datatailors.com", 
+      "email": "super@example.com.invalid", 
       "date_joined": "2010-10-19 09:03:19"
     }
   }, 
@@ -37,7 +37,7 @@
     "pk": 2, 
     "model": "auth.user", 
     "fields": {
-      "username": "bob_anon", 
+      "username": "bop_anon", 
       "first_name": "", 
       "last_name": "", 
       "is_active": true, 
@@ -55,7 +55,7 @@
     "pk": 3, 
     "model": "auth.user", 
     "fields": {
-      "username": "bob_test", 
+      "username": "bop_test", 
       "first_name": "", 
       "last_name": "", 
       "is_active": true, 
