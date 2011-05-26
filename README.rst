@@ -59,9 +59,19 @@ objects:
 
  * bop.admin.ObjectPermissionInline
  * bop.forms.inline_permissions_form_factory
- * An API to grant and revoke permissions to users or groups
+ * An very flexible API to grant and revoke permissions to users or groups
+ * bop.managers.UserObjectManager to retrieve objects the user has permissions on
+
+Also of interest: 
+
+ * has_model_perms
 
 More to follow...
+
+TODO:
+
+More docs
+Grant/Revoke for ModelBackend (if objects is None)?
 
 .. _article: http://djangoadvent.com/1.2/object-permissions/
 .. _other: http://www.djangopackages.com/grids/g/perms/
