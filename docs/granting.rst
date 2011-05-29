@@ -1,5 +1,5 @@
-Usage
-=====
+Grant and Revoke
+================
 
 Once installed you will want to start granting permissions to your
 objects. django-bop provides three tools to help you with that:
