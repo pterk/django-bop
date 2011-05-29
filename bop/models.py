@@ -12,7 +12,7 @@ class ObjectPermission(models.Model):
     group = models.ForeignKey(Group, null=True, blank=True)
     permission = models.ForeignKey(Permission)
     content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField(index=True)
+    object_id = models.PositiveIntegerField(db_index=True)
     object = generic.GenericForeignKey('content_type', 'object_id')
 
     objects      = ObjectPermissionManager()
