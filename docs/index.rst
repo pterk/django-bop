@@ -6,11 +6,17 @@
 Welcome to django-bop's documentation!
 ===========================================
 
+django-bop provides tools to manage object-level permissions. 
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
+   installation
+   Granting and revoking <granting>
+   checking
+   
 Indices and tables
 ==================
 

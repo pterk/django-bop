@@ -1,37 +1,7 @@
-==========
-django-bop
-==========
-
-Django-bop provides Basic Object-level Permissions for django 1.2 and
-later. It is based on the django-advent article_ 'Object Permissions'
-by Florian Apolloner.
-
-Although there are a few other_ permission backends I wanted a
-simple(r) backend that closely matches the existing django
-functionality.
-
-Features
---------
-
-Django-bop provides several mechanisms to manage and check the
-permissions for objects:
-
-* bop.admin.ObjectAdmin
-* bop.forms.inline_permissions_form_factory
-* api.grant and api.revoke
-* bop.backends.ObjectBackend
-* ifhasperm templatetag
-* bop.managers.UserObjectManager 
-* bop.managers.ObjectPermissionManager
-
-Also of interest:
-
-* has_model_perms
-
 Installation
-------------
+============
 
-Install it in your (virtual) environment::
+Install django-bop in your (virtual) environment::
 
   $ pip install django-bop
 
@@ -79,6 +49,3 @@ When all configuration is done, bring the database up to date::
 
   $ ./manage.py migrate bop
 
-
-.. _article: http://djangoadvent.com/1.2/object-permissions/
-.. _other: http://www.djangopackages.com/grids/g/perms/
