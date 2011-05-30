@@ -10,7 +10,7 @@ from django.utils.http import urlquote
 
 
 # closely matches user
-def user_has_object_level_perm(perm, model=None, pkfield='pk', login_url=None,
+def user_has_object_level_perm(perm, model, pkfield='pk', login_url=None,
                                redirect_field_name=REDIRECT_FIELD_NAME):
     """
     Decorator for views that checks that the user has `perm` on `obj`
