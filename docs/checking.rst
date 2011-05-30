@@ -6,6 +6,7 @@ permissions in your views and templates. Bop provides several
 mechanisms to do that.
 
 * :ref:`ObjectBackend`
+* :ref:`Decorator`
 * :ref:`TemplateTag`
 * :ref:`ObjectPermissionManager`
 * :ref:`UserObjectManager`
@@ -23,6 +24,44 @@ standard django method of checking for permissions in your views::
   testuser.get_all_permissions(myobject)
   testuser.get_group_permissions(myobject)
 
+
+.. _Decorator:
+
+Decorator
+---------
+
+The :py:obj:`user_has_object_level_perm` decorator checks wether a
+user has permission to access an object::
+
+  :py:obj:`user_has_object_level_perm`(perm, model, pkfield='pk', login_url=None, redirect_field_name=REDIRECT_FIELD_NAME)
+
+The :py:obj:`pkfield` is expected to be passed to the view as a
+keyword argument.
+
+The object will be obtained by doing::
+
+    Model.objects.get(**{pkfield:kwargs[pkfield]})
+
+An example will perhaps better illustrate::
+
+   # In urls.py
+   ...
+   (r'^articles/(\d{4})/(\d{2})/(?P<article_id>\d+)/$', 'news.views.article_detail'),
+   ...
+
+
+   # In views.py
+   from bop.decorators import user_has_object_level_perm
+
+   from news.models import Article
+
+
+   @user_has_object_level_perm('news.view_article', Article, pkfield='article_id')
+   def view article_detail(year, month, article_id):
+       pass
+
+Note that the :py:obj:`pkfield` must be using `named groups` so the
+decorator can actually find the keyword argument in \*\*kwargs.
 
 .. _TemplateTag:
 
