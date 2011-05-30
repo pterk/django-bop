@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
-version = '0.1'
+version = '0.2'
 
 setup(
     name='django-bop',
 
     version=version,
     description="Basic Object-level Permissions in django (1.2+)",
-    #long_description=open('readme').read(),
+    long_description=open('README.rst').read(),
     keywords='django object level permissions',
     author='Peter van Kampen',
     author_email='pterk@datatailors.com',
