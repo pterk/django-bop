@@ -375,7 +375,7 @@ class TestUserObjectManager(BOPTestCase):
 class TestNoObjectBackend(BOPTestCase):
     def __init__(self, *args, **kwargs):
         settings.AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
-        super(TestNoBackend, self).__init__(*args, **kwargs)
+        super(TestNoObjectBackend, self).__init__(*args, **kwargs)
         
     def test(self):
         self.assertRaises(ImproperlyConfigured, _ = ObjectPermission.objects.all())
