@@ -9,7 +9,7 @@ from django.db.models import Q
 class ObjectPermissionManager(models.Manager):
     def __init__(self, *args, **kwargs):
         # sanity check
-        if 'bop.backends.ObjectBackend' in settings.AUTHENTICATION_BACKENDS:
+        if 'bop.backends.ObjectBackend' not in settings.AUTHENTICATION_BACKENDS:
             raise ImproperlyConfigured(
                 'You are using bop.models.ObjectPermission'
                 ' but bop.backends.ObjectBackend is not in'

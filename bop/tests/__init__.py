@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import User, Group, Permission, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models.query import QuerySet
 from django.test import TestCase
 
@@ -370,3 +371,11 @@ class TestUserObjectManager(BOPTestCase):
         self.assertEqual(Thing.objects.get_user_objects(self.testuser, check_model_perms=True).count(), 3)
         self.assertEqual(Thing.objects.get_user_objects(self.testuser, None, True).count(), 3)
 
+
+class TestNoObjectBackend(BOPTestCase):
+    def __init__(self, *args, **kwargs):
+        settings.AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
+        super(TestNoBackend, self).__init__(*args, **kwargs)
+        
+    def test(self):
+        self.assertRaises(ImproperlyConfigured, _ = ObjectPermission.objects.all())
