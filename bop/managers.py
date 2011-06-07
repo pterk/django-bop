@@ -55,6 +55,10 @@ class UserObjectManager(models.Manager):
         different name or perhaps add UserObjectManager as an extra
         superclass to the existing custom manager.
         """
+
+        if user.is_superuser:
+            return self.all()
+
         # importing here to avoid circular imports
         from bop.api import resolve, perm2dict, has_model_perms
         from bop.models import ObjectPermission
