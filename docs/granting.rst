@@ -35,7 +35,6 @@ In admin.py::
 
 
   admin.site.register(MyModel, MyModelAdmin)
-  admin.site.register(Log)
 
 
 .. _form-factory:
