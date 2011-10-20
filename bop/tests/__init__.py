@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User, Group, Permission, AnonymousUser
 from django.contrib.contenttypes.models import ContentType
 from django.core.urlresolvers import reverse
@@ -57,7 +58,9 @@ class TestAnonymousModelBackendNoAnon(BOPTestCase):
         self.anonuser.user_permissions.clear()
 
     def test(self):
+        self.assertEqual(authenticate(), None)
         t = self.thing
+        self.assertEqual(t.__unicode__(), 'a thing')
         self.assertFalse(self.testuser.has_perm('bop.add_thing', t))
         self.assertFalse(self.anonuser.has_perm('bop.add_thing', t))
         self.assertFalse(self.anonymous.has_perm('bop.add_thing', t))
