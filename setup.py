@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.2'
+version = '0.3'
 
 setup(
     name='django-bop',
@@ -11,14 +11,14 @@ setup(
     keywords='django object level permissions',
     author='Peter van Kampen',
     author_email='pterk@datatailors.com',
-    url='',
+    url='https://github.com/pterk/django-bop',
     license='BSD',
     packages=find_packages(),
     # namespace_packages=[],
     include_package_data=True,
     zip_safe=False,
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
